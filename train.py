@@ -1,3 +1,6 @@
+#obtain the data
+import data
+
 # handeling data
 import numpy as np
 import pandas as pd
@@ -60,7 +63,10 @@ def compile_model():
 
     return loss_fn, accuracy, optimizer
 
-def train_model(model, X_train, y_train, X_valid, y_valid, loss_fn, accuracy, optimizer, device: torch.device = device):
+def train_model(model, X_train, y_train, X_valid, y_valid, loss_fn, accuracy, optimizer):
+  # set device agnostic code
+  device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
   # set number of epochs
   EPOCHS = 100
 
@@ -144,31 +150,45 @@ class Model(nn.Module):
   
   
   
-  if __name__ == "__main__":
+if __name__ == "__main__":
 
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    
-    # split the data
-    X_train, X_valid, y_train, y_valid = split_format_data(raw_train, 'Class')
+  # read in the data
+  raw_train = pd.read_csv("/workspaces/Model-Deployment-With-Bentoml/data/train.csv")
 
-    # Instantiate the model
-    input_num = 8
-    output_num = 2
-    model = Model(inputs=input_num, outputs=output_num)
+  # drop id column
+  raw_train = drop_columns(raw_train, 'id')
+  
+  # split the data
+  X_train, X_valid, y_train, y_valid = split_format_data(raw_train, 'Class')
 
-    # obtain loss, accuracy and optimizer
-    loss_fn, accuracy, optimizer = compile_model()
+  # Instantiate the model
+  input_num = 8
+  output_num = 2
+  model = Model(inputs=input_num, outputs=output_num)
 
-    # train the model
-    train_model(model=model,
-            X_train=X_train,
-            y_train=y_train,
-            X_valid=X_valid,
-            y_valid=y_valid,
-            loss_fn=loss_fn,
-            accuracy=accuracy,
-            optimizer=optimizer)
-    
-    # save the model to the Bento local model store
-    saved_pytorch_model = bentoml.pytorch.save_model('pytorch_model', model)
-    print(f'Model saved: {saved_pytorch_model}')
+  # obtain loss, accuracy and optimizer
+  loss_fn, accuracy, optimizer = compile_model()
+
+  # train the model
+  train_model(model=model,
+          X_train=X_train,
+          y_train=y_train,
+          X_valid=X_valid,
+          y_valid=y_valid,
+          loss_fn=loss_fn,
+          accuracy=accuracy,
+          optimizer=optimizer)
+  
+  # save the model to the Bento local model store
+  saved_pytorch_model = bentoml.pytorch.save_model(
+    'pytorch_model',
+    model, 
+    signatures={   # model signatures for runner inference
+      "predict": {
+          "batchable": True,
+          "batch_dim": 0,
+      }
+    })
+  print(f'Model saved: {saved_pytorch_model}')
+
+  # Model saved: Model(tag="pytorch_model:xzrlgzsovglrsycf")
