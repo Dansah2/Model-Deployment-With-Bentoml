@@ -183,12 +183,8 @@ if __name__ == "__main__":
   saved_pytorch_model = bentoml.pytorch.save_model(
     'pytorch_model',
     model, 
-    signatures={   # model signatures for runner inference
-      "predict": {
-          "batchable": True,
-          "batch_dim": 0,
-      }
-    })
+    signatures={"__call__": {"batchable": True, "batch_dim": 0}}
+    )
   print(f'Model saved: {saved_pytorch_model}')
 
-  # Model saved: Model(tag="pytorch_model:xzrlgzsovglrsycf")
+  # Model saved: Model(tag="pytorch_model:7gahyssow6imqycf")
