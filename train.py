@@ -186,5 +186,3 @@ if __name__ == "__main__":
     signatures={"__call__": {"batchable": True, "batch_dim": 0}}
     )
   print(f'Model saved: {saved_pytorch_model}')
-
-  # Model saved: Model(tag="pytorch_model:7gahyssow6imqycf")
